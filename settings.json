@@ -1,0 +1,13 @@
+{
+ "aflow_tolerance": "tight",
+ "degeneracy_tolerance": 0.01,
+ "round_if_close": false,
+ "round_if_close_tolerance": 0.05,
+ "irrep_tolerance": 0.05,
+ "tdm_irrep_from_irrep": true,
+ "Gvec_reduction": 0.20,
+ "Gammapoint_calc": true,
+ "realgrid_mult": 4,
+ "percent_cutoff": 0.40,
+ "char_table_dir": "/dedur01/data/wilst89/software/character_tables"
+}
