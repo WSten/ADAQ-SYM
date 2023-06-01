@@ -646,7 +646,7 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
             print("Calculated new centers!")
         print("Spin 1")
         res1 = get_overlaps_of_bands(wf_file, name1, 1, lower_b_s1, upper_b_s1, centers_s1, Sym_ops, folder_path_out, settings)
-        write_overlaps_to_text(res1, folder_path_out, name1)
+        #write_overlaps_to_text(res1, folder_path_out, name1)
         no_irr_s1 = analyse_symmetry(eig_file, name1, 1, lower_b_s1, upper_b_s1, Sym_ops, PGname, folder_path_out, settings)
         good_centers_s1 = get_good_centers(name1, lower_b_s1, no_irr_s1, folder_path_out)
 
@@ -667,18 +667,17 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
             print("Calculated new centers!")
         print("Spin 2")
         res2 = get_overlaps_of_bands(wf_file, name2, 2, lower_b_s2, upper_b_s2, centers_s2, Sym_ops, folder_path_out, settings)
-        write_overlaps_to_text(res2, folder_path_out, name2)
+        #write_overlaps_to_text(res2, folder_path_out, name2)
         no_irr_s2 = analyse_symmetry(eig_file, name2, 2, lower_b_s2, upper_b_s2, Sym_ops, PGname, folder_path_out, settings)
         good_centers_s2 = get_good_centers(name2, lower_b_s2, no_irr_s2, folder_path_out)
 
 
 
     # Gather good centers, add additional center candidates, e.g. impurity position
-    good_centers = np.array([])
-    if len(s1bands) > 0:
-        good_centers = np.append(good_centers, good_centers_s1, axis=0)
-    if len(s2bands) > 0:
-        good_centers = np.append(good_centers, good_centers_s2, axis=0)
+    #good_centers = np.array([])
+    if len(s1bands) > 0 and len(s2bands) > 0:
+        good_centers = np.append(good_centers_s1, good_centers_s2, axis=0)
+        #good_centers = np.append(good_centers, good_centers_s2, axis=0)
 
     defect_pos = get_single_species(pos_file)
     if defect_pos != None:
@@ -692,7 +691,7 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
     while 0 < len(no_irr_s1) and 0 < len(good_centers_s1):
         good_centers_s1, centers_s1 = replace_bad_centers(name1, lower_b_s1, no_irr_s1, good_centers_s1, folder_path_out)
         res1 = get_overlaps_of_bands(wf_file, name1, 1, lower_b_s1, upper_b_s1, centers_s1, Sym_ops, folder_path_out, settings)
-        write_overlaps_to_text(res1, folder_path_out, name1)
+        #write_overlaps_to_text(res1, folder_path_out, name1)
         no_irr_s1 = analyse_symmetry(eig_file, name1, 1, lower_b_s1, upper_b_s1, Sym_ops, PGname, folder_path_out, settings)
     if len(no_irr_s1) > 0:
         file = open("no_irr.txt","a+")
@@ -704,13 +703,14 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
     while 0 < len(no_irr_s2) and 0 < len(good_centers_s2):
         good_centers_s2, centers_s2 = replace_bad_centers(name2, lower_b_s2, no_irr_s2, good_centers_s2, folder_path_out)
         res2 = get_overlaps_of_bands(wf_file, name2, 2, lower_b_s2, upper_b_s2, centers_s2, Sym_ops, folder_path_out, settings)
-        write_overlaps_to_text(res2, folder_path_out, name2)
+        #write_overlaps_to_text(res2, folder_path_out, name2)
         no_irr_s2 = analyse_symmetry(eig_file, name2, 2, lower_b_s2, upper_b_s2, Sym_ops, PGname, folder_path_out, settings)
     if len(no_irr_s2) > 0:
         file = open("no_irr.txt","a+")
         file.write("Spin2: "+str(no_irr_s2)+"\n")
         file.close()
 
+    write_overlaps_to_text_fancy(PGname, folder_path_out, name, settings)
     csm_main(s1bands, s2bands, PGname, Sym_ops, settings)
 
     return 0

@@ -339,5 +339,72 @@ def write_overlaps_to_text(overlap_array, folder_path_out, name):
     file.close()
     return 0
 
+def write_overlaps_to_text_fancy(PGname, folder_path_out, name, settings):
+    """
+    Writes the overlap array to a .txt file readable by humans.
+    Input:
+        PGname: name of point group
+        folder_path_out: string with path to output directory
+        name: string with name of
+    Returns:
+        0
+    """
+
+    ov1 = os.path.join(folder_path_out,"Overlaps_"+name+"_S1.pickle")
+    ov2 = os.path.join(folder_path_out,"Overlaps_"+name+"_S2.pickle")
+    f1 = open(ov1,"rb")
+    f2 = open(ov2,"rb")
+    ov_array1 = pickle.load(f1)
+    ov_array2 = pickle.load(f2)
+    f1.close()
+    f2.close()
+
+    rounding = 3
+    space = 10+rounding*2
+
+    ov_out = os.path.join(folder_path_out,"Overlaps"+name+".txt")
+    file = open(ov_out, "w+")
+    ch_table, pos_vector = get_character_table(PGname,settings)
+
+    file.write("Overlaps\n")
+    file.write("\nPoint group: "+PGname+"\n")
+
+
+    sym_string = f"{'Band:':<12}"
+    last_sym = "1"
+    for sym in ch_table[0][1:]:
+        try:
+            last_sym = int(last_sym)
+            sym_string += f"{sym:<{space}}"*last_sym
+        except:
+            try:
+                int(sym)
+            except:
+                sym_string += f"{sym:<{space}}"
+        last_sym = sym
+
+    file.write("Spin up\n"+sym_string+"\n")
+
+    for orbital_info in ov_array1:
+        ov_string = f"{orbital_info[0][2]:<12}"
+        for ov_info in orbital_info[1]:
+            ov = round(np.real(ov_info[4]),rounding) + 1j*round(np.imag(ov_info[4]),rounding)
+            ov = str(ov).strip('(').strip(')')
+            ov_string += f"{ov:<{space}}"
+        file.write(ov_string+"\n")
+
+    file.write("\nSpin down\n"+sym_string+"\n")
+
+    for orbital_info in ov_array2:
+        ov_string = f"{orbital_info[0][2]:<12}"
+        for ov_info in orbital_info[1]:
+            ov = round(np.real(ov_info[4]),rounding) + 1j*round(np.imag(ov_info[4]),rounding)
+            ov = str(ov).strip('(').strip(')')
+            ov_string += f"{ov:<{space}}"
+        file.write(ov_string+"\n")
+
+
+    return 0
+
 if __name__ == "__main__":
     0
