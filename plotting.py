@@ -165,24 +165,24 @@ def plot_eigen(band_info, spin):
             y += -0.06
 
         # Print irrep
-        plt.text(x_right+x_irrep,eig+y,fancy_subscript(str(state[4]), True),fontsize=15)
+        plt.text(x_right+x_irrep,eig+y,fancy_subscript(str(state[4]), True),fontsize=22)
 
     return 0
 
-def plot_ipr(HOB, eig_file, wf_file, gs):
+def plot_ipr(HOB, eig_file, wf_file, ax):
     """
 
     """
-    
-    ax1 = plt.subplot(gs[0])
+
+    #ax1 = plt.subplot(gs[1])
     plt.margins(0,0,tight=True)
     #plt.ylim(8.3, 14.3)
-    ax1.spines['top'].set_visible(False)
-    ax1.spines['right'].set_visible(True)
-    ax1.spines['bottom'].set_visible(True)
-    ax1.spines['left'].set_visible(False)
-    ax1.invert_xaxis()
-    ax1.yaxis.tick_right()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(True)
+    ax.spines['left'].set_visible(True)
+    #ax1.invert_xaxis()
+    #ax1.yaxis.tick_right()
     #ax1.set_yticklabels([])
 
     wav = vaspwfc(wf_file, lgamma=True)
@@ -227,48 +227,52 @@ def plot_ipr(HOB, eig_file, wf_file, gs):
             c = 'b'
             spin_label = "Spin Down"
             avg_label = "Spin Down Avg"
-        plt.plot(iprs, eigenvalues, "x", color=c, label=spin_label)
+        ax.plot(iprs, eigenvalues, "x", color=c, label=spin_label)
 
         # Draw average IPR level in plot
         #plt.vlines(ipr_avg, eigenvalues[0], eigenvalues[-1], color=c, label=avg_label, linestyle='dotted')
         #plt.text(bands[-1]-5, ipr_avg*1.2, "Average IPR")
 
     #ax.set_ylim([9.05, 14.30])
-    plt.xlabel("IPR [10^-3]", fontsize=15)
-    plt.xlim([1.1*ipr_max, 0])
+    plt.xlabel("IPR [$10^{-3}$]", fontsize=20)
+    plt.xlim([0, 1.1*ipr_max])
     #plt.legend(fontsize=15, bbox_to_anchor=(0.5, 0.90))
-    plt.legend(fontsize=15)
+    plt.legend(fontsize=20)
 
-    return ax1
+    return ax
 
 def plot_levels_and_ipr(folder_path, plotname, HOB, eig_file= "EIGENVAL", filename="", wf_file="WAVECAR"):
 
     plt.rcParams['axes.linewidth'] = 2
-    plt.rcParams['xtick.major.size'] = 5
+    plt.rcParams['xtick.major.size'] = 6
     plt.rcParams['xtick.major.width'] = 1.5
-    plt.rcParams['xtick.minor.size'] = 2.5
+    plt.rcParams['xtick.minor.size'] = 3.5
     plt.rcParams['xtick.minor.width'] = 1.5
-    plt.rcParams['ytick.major.size'] = 5
+    plt.rcParams['ytick.major.size'] = 6
     plt.rcParams['ytick.major.width'] = 1.5
-    plt.rcParams['ytick.minor.size'] = 2.5
+    plt.rcParams['ytick.minor.size'] = 3.5
     plt.rcParams['ytick.minor.width'] = 1.5
-    plt.rcParams['xtick.labelsize'] = 12
-    plt.rcParams['ytick.labelsize'] = 12
+    plt.rcParams['xtick.labelsize'] = 15
+    plt.rcParams['ytick.labelsize'] = 15
     plt.rcParams["figure.figsize"] = (14.4,7.2)
 
     HOB = int(HOB)
 
-    gs = gridspec.GridSpec(1, 2, width_ratios=[1, 3])
+    gs = gridspec.GridSpec(1, 2, width_ratios=[3, 1])
     plt.margins(0,0,tight=True)
-
-    ax1 = plot_ipr(HOB, eig_file, wf_file, gs)
-
+    ax1 = plt.subplot(gs[1])
+    ax1 = plot_ipr(HOB, eig_file, wf_file, ax1)
     plt.subplots_adjust(wspace=0.22)
-    #ax2 = plt.subplot(1,2,2)
-    ax2 = plt.subplot(gs[1], sharey=ax1)
-    plt.margins(0,0,tight=True)
 
+
+    #ax2 = plt.subplot(1,2,2)
+    ax2 = plt.subplot(gs[0], sharey=ax1)
+    plt.margins(0,0,tight=True)
     plot_levels(folder_path, plotname)
+
+
+
+
 
     return 0
 
@@ -359,7 +363,7 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
     plt.rcParams['ytick.minor.size'] = 2.5
     plt.rcParams['ytick.minor.width'] = 1.5
     plt.rcParams['xtick.labelsize'] = 12
-    plt.rcParams['ytick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 15
     plt.rcParams["figure.figsize"] = (9.6,7.2)
 
     # Load point group, band and transition information
@@ -373,14 +377,14 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
     f.close()
 
     # Get and draw vb and cb
-    vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), band_info2[0][0], band_info2[-1][0], 2)
+    vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), band_info2[4][0], band_info2[-1][0], 2)
 
     # Manual VB and CB for Diamond
     #vb=9.048191
     #cb=14.342933
 
-    plt.text(-0.75,vb-0.35,"VB",fontsize=15)
-    plt.text(-0.75,cb+0.15,"CB",fontsize=15)
+    plt.text(-0.85,vb-0.35,"VB",fontsize=20)
+    plt.text(-0.85,cb+0.15,"CB",fontsize=20)
 
     ax = plt.gca()
     vbrect = patches.Rectangle((0,vb),10,-0.7, color="0.7")
@@ -409,8 +413,8 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
         principal_axis = np.array(ov[0][1][1][2])
         principal_axis = [round(p / max(principal_axis, key=abs), 3) for p in principal_axis]
 
-    plt.text(0,cb+1.30, "Point group: "+fancy_subscript(Pointgroup, False), fontsize=16)
-    plt.text(0,cb+0.95, "Principal axis: "+str(principal_axis), fontsize=16)
+    plt.text(0,cb+1.30, "Point group: "+fancy_subscript(Pointgroup, False), fontsize=20)
+    plt.text(0,cb+0.95, "Principal axis: "+str(principal_axis), fontsize=20)
 
     labels = []
     labels = plot_transitions(allowed_tr1, 1, labels)
@@ -422,7 +426,7 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
 
     plt.xlim([-1, 12])
     plt.ylim([vb-1, cb+1])
-    plt.ylabel("Eigenvalue [eV]", fontsize=15)
+    plt.ylabel("Eigenvalue [eV]", fontsize=20)
 
     #ytic_pos = [vb+i for i in range(7)]
     #ytics = list(range(7))
@@ -432,9 +436,9 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
     plt.box(on=None)
     plt.subplots_adjust(left=0.160)
     #plt.legend(handles = handles, fontsize=15)
-    plt.legend(handles = handles, bbox_to_anchor=(0.35, 0.80), fontsize=15)
-    plt.savefig(folder_path+"/Tr_"+plotname+".png")
-    #plt.savefig(folder_path+"/Tr_"+plotname+".svg", format='svg')
+    plt.legend(handles = handles, bbox_to_anchor=(0.35, 0.80), fontsize=22)
+    #plt.savefig(folder_path+"/Tr_"+plotname+".png")
+    plt.savefig(folder_path+"/Tr_"+plotname+".svg", format='svg')
 
 
     return 0

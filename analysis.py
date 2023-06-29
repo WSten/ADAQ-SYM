@@ -598,7 +598,10 @@ def analyse_symmetry(eig_file, name, spin_i, lower_b, upper_b, Sym_ops, PGname, 
 
 def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file = "EIGENVAL", name="", settings_file = "settings.json", folder_path_out=""):
     """
-
+    Main function of ADAQ-SYM.
+    Performs overlap calculation for considerd bands, followed by symmetry
+    analysis assigning irreducible representations to each orbital.
+    CSM is also calculated.
     Input:
         s1bands: list of band indices for spin channel 1
         s2bands: list of band indices for spin channel 2
@@ -620,14 +623,7 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
     sym = Symmetry()
     Sym_ops = get_symmetry_operators(sym, pos_file, PGname, settings)
 
-    """
-    #Use this to manually reduce point group.
-    temp = []
-    for i in range(4):
-        temp.append([Sym_ops[i][0], Sym_ops[i][3], Sym_ops[i][7], Sym_ops[i][11]])
-    Sym_ops = temp
-    PGname = "C2h"
-    """
+
 
     # Initial overlap and analysis for spin up channel
     no_irr_s1 = []
@@ -715,13 +711,109 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
 
     return 0
 
+def analyse_subset(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file = "EIGENVAL", name="", newname="", settings_file = "settings.json", folder_path_out=""):
+    """
+    Reruns the analysis of an existing overlap calculation. Possible to analyse
+    subsets of the symmetries in the original calculation, this however requires
+    some manual editing to choose the right subset of symmetries.
+    Input:
+        s1bands: list of band indices for spin channel 1
+        s2bands: list of band indices for spin channel 2
+        pos_file: string that is the path to a crystal structure file like POSCAR or CONTCAR
+        wf_file: string that is the path to a WAVECAR file
+        eig_file: string that is the path to a EIGENVAL file
+        name: string with name (numbering) of defect
+        settings_file: string that is the path to a json file
+        folder_path_out: string that is the path to output directory
+    Returns:
 
+    """
+
+    settings = load_settings(settings_file)
+
+    PGname = get_pointgroup(pos_file, settings)
+    print("Point group: ",PGname)
+    sym = Symmetry()
+    Sym_ops = get_symmetry_operators(sym, pos_file, PGname, settings)
+
+
+    """
+    #Use this to manually reduce point group.
+    temp = []
+    for i in range(4):
+        temp.append([Sym_ops[i][0], Sym_ops[i][1], Sym_ops[i][2], Sym_ops[i][9], Sym_ops[i][10], Sym_ops[i][11]])
+    Sym_ops = temp
+    PGname = "C3v"
+    """
+
+    #Use this to manually reduce point group.
+    temp = []
+    for i in range(4):
+        temp.append([Sym_ops[i][0], Sym_ops[i][4], Sym_ops[i][6], Sym_ops[i][9]])
+        #temp.append([Sym_ops[i][0], Sym_ops[i][6]])
+    Sym_ops = temp
+    PGname = "C2h"
+
+
+
+    name1 = name+"_S1"
+    lower_b_s1 = s1bands[0]
+    upper_b_s1 = s1bands[-1]
+    ov_path = os.path.join(folder_path_out,"Overlaps_"+name1+".pickle")
+    f = open(ov_path,"rb")
+    sym_ov_array = pickle.load(f)
+    f.close()
+
+    temp = sym_ov_array
+    for i, orbital in enumerate(sym_ov_array):
+        ov_arr = orbital[1]
+        temp[i][1] = [ov_arr[0], ov_arr[4], ov_arr[6], ov_arr[9]]
+        #temp[i][1] = [ov_arr[0],ov_arr[6]]
+        #temp[i][1] = orbital[1]
+
+    name1 = newname+name1
+    f = open("Overlaps_"+name1+".pickle","wb")
+    pickle.dump(temp, f, protocol=2)
+    f.close()
+    no_irr_s1 = analyse_symmetry(eig_file, name1, 1, lower_b_s1, upper_b_s1, Sym_ops, PGname, folder_path_out, settings)
+
+
+
+    name2 = name+"_S2"
+    lower_b_s2 = s2bands[0]
+    upper_b_s2 = s2bands[-1]
+    ov_path = os.path.join(folder_path_out,"Overlaps_"+name2+".pickle")
+    f = open(ov_path,"rb")
+    sym_ov_array = pickle.load(f)
+    f.close()
+
+    temp = sym_ov_array
+    for i, orbital in enumerate(sym_ov_array):
+        ov_arr = orbital[1]
+        temp[i][1] = [ov_arr[0], ov_arr[4], ov_arr[6], ov_arr[9]]
+        #temp[i][1] = [ov_arr[0],ov_arr[6]]
+        #temp[i][1] = orbital[1]
+
+    name2 = newname+name2
+    f = open("Overlaps_"+name2+".pickle","wb")
+    pickle.dump(temp, f, protocol=2)
+    f.close()
+
+    no_irr_s2 = analyse_symmetry(eig_file, name2, 2, lower_b_s2, upper_b_s2, Sym_ops, PGname, folder_path_out, settings)
+
+    name = newname+name
+
+    write_overlaps_to_text_fancy(PGname, folder_path_out, name, settings)
+    csm_main(s1bands, s2bands, PGname, Sym_ops, settings, name=name)
+
+    return 0
 
 if __name__ == "__main__":
     #host_pos_file="SiC/workflow_test/POSCAR_host"
     #main(1147,1149,2, host_pos_file="../hh/CONTCAR" ,name="test_6")
 
-    main([], [1025, 1026, 1027], name="")
+    #main([], [1025, 1026, 1027], name="")
+    analyse_subset([1017, 1018, 1019, 1020, 1021, 1022, 1023], [1017, 1018, 1019, 1020, 1021, 1022, 1023], newname="C2h_4")
     #main([1153],[])
 
     print("Done")

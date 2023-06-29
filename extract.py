@@ -298,7 +298,7 @@ def get_single_species(pos_file):
 
     return None
 
-def find_average_position_general(realwf_array, procent):
+def find_average_position(realwf_array, procent):
     """
     Finds the average position of the wavefuntion (weighted center of mass)
     Input:
@@ -871,13 +871,13 @@ def load_settings(file):
     except Exception as e:
         data['round_if_close_tolerance'] = 0.05
     try:
-        data['irrep_tolerance']
+        data['IR_tolerance']
     except Exception as e:
-        data['irrep_tolerance'] = 0.05
+        data['IR_tolerance'] = 0.05
     try:
-        data['tdm_irrep_from_irrep']
+        data['tdm_IR_from_IR']
     except Exception as e:
-        data['tdm_irrep_from_irrep'] = True
+        data['tdm_IR_from_IR'] = True
     try:
         data['Gvec_reduction']
     except Exception as e:
