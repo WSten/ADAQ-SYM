@@ -352,7 +352,11 @@ def plot_levels_one_spin(folder_path, filename, plotname, eig_file):
     return 0
 
 def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
-
+    """
+    Plots an eigenvalue level diagram of the single particle states,
+    irreducible representation is shown for each level, and allowed transitions
+    are marked by arrows with color depending on polarisation.
+    """
     plt.rcParams['axes.linewidth'] = 2
     plt.rcParams['xtick.major.size'] = 5
     plt.rcParams['xtick.major.width'] = 1.5
