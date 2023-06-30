@@ -9,6 +9,7 @@ To download this repository use:
 ```bash
 git clone https://github.com/WSten/ADAQ-SYM.git
 ```
+(Make this a python module so that its importable)
 
 ### Requirements 
 
