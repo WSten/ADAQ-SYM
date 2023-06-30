@@ -18,6 +18,11 @@ git clone https://github.com/WSten/ADAQ-SYM.git
 * VaspBandUnfolding, follow the instructions at https://github.com/QijingZheng/VaspBandUnfolding
 * Character table files, download from http://gernot-katzers-spice-pages.com/character_tables/
 
+
+## Example
+Copy pasteable example of how to use the code on NV center,
+wget files from dedur
+
 ## Use
 
 Starting with a completed simulation of a defect in VASP, the ```main()``` function in ```analysis.py``` reads the outputs from VASP and performs the symmetry analysis by first finding characters by calcultating overlaps, and then assigning irreducible representations to each orbital. Then, selection rules are applied to the transition dipole moment to find allowed transitions.
