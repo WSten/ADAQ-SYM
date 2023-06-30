@@ -64,9 +64,6 @@ CSM is written to ```CSM*.txt```.
 where irreducible representation is shown for each level, and allowed transitions
 are marked by arrows with color depending on polarisation.
 
-## Licence
-Some open-source licence 
-
 ## Cite
 Cite as ...
 
