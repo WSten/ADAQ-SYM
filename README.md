@@ -23,6 +23,7 @@ mkdir character_tables
 tar -xf character_tables.tar.xz -C character_tables
 sed -i "s|/path/to|$PWD|g" ADAQ-SYM/settings.json
 ```
+(Make this a python module so that its importable)
 
 ### Example
 To try ADAQ-SYM on a NV(-) center do the following:
@@ -77,9 +78,6 @@ CSM is written to ```CSM*.txt```.
 ```plot_levels()``` in ```plotting.py``` generates an eigenvalue level diagram of the single particle states,
 where irreducible representation is shown for each level, and allowed transitions
 are marked by arrows with color depending on polarization.
-
-## License
-Some open-source license
 
 ## Cite
 Cite as ...
