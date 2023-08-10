@@ -9,5 +9,5 @@
  "Gammapoint_calc": true,
  "realgrid_mult": 4,
  "percent_cutoff": 0.40,
- "char_table_dir": "/dedur01/data/wilst89/software/character_tables"
+ "char_table_dir": "/path/to/character_tables"
 }
