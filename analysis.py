@@ -368,7 +368,7 @@ def gather_csm(eig_file, name, spin_i, lower_b, upper_b, Sym_ops, PGname, folder
         irreps
     """
 
-    irrep_tol = settings['irrep_tolerance']
+    irrep_tol = settings['IR_tolerance']
 
     ch_table, pos_vector = get_character_table(PGname,settings)
 
@@ -469,8 +469,8 @@ def get_allowed_transitions(char_table, position_vecs, char_list, multiplicity, 
         list of bands where no irrep was found
     """
 
-    irrep_tol = settings['irrep_tolerance']
-    tdm_irrep_from_irrep = settings['tdm_irrep_from_irrep']
+    irrep_tol = settings['IR_tolerance']
+    tdm_IR_from_IR = settings['tdm_IR_from_IR']
     ch_list = char_list[1:]
     irr_symbols = get_irrep_symbols(char_table)
     irreps = []
@@ -484,7 +484,7 @@ def get_allowed_transitions(char_table, position_vecs, char_list, multiplicity, 
             for band in bands_by_degen[i]:
                 no_irr.append(band)
 
-        if tdm_irrep_from_irrep:
+        if tdm_IR_from_IR:
             ch_list[i] = np.array([round(np.real(c)) for c in ch])
 
     transitions = []
@@ -534,7 +534,7 @@ def analyse_symmetry(eig_file, name, spin_i, lower_b, upper_b, Sym_ops, PGname, 
         list of bands where no irrep was found
     """
 
-    irrep_tol = settings['irrep_tolerance']
+    irrep_tol = settings['IR_tolerance']
 
     ch_table, pos_vector = get_character_table(PGname,settings)
 

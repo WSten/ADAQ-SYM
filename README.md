@@ -28,8 +28,10 @@ sed -i "s|/path/to|$PWD|g" ADAQ-SYM/settings.json
 ### Example
 To try ADAQ-SYM on a NV(-) center do the following:
 ```bash
-wget ......dedur01/data/public/ADAQ-SYM/NV_example
+wget https://public.openmaterialsdb.se/ADAQ_SYM/NV_example.tar.gz
+tar -xf NV_example.tar.gz NV_example/
 cd NV_example
+cp ../ADAQ-SYM/settings.json settings.json
 python3 /path/to/ADAQ-SYM/run_main.py 1022 1024 1022 1024
 ```
 
