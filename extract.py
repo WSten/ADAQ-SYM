@@ -851,8 +851,14 @@ def load_settings(file):
         f.close()
         print("Loaded: ",str(file))
     except:
-        data = {}
-        print("Loaded default settings.")
+        try:
+            f = open(file,"r")
+            data = json.load(f)
+            f.close()
+            print("Loaded: ",str(os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.json")))
+        except:
+            data = {}
+            print("Loaded default settings.")
 
     try:
         data['aflow_tolerance']
