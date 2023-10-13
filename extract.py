@@ -820,6 +820,83 @@ def gvectors_and_energy(wav, ikpt=1, force_Gamma=False, check_consistency=False)
 
     return np.asarray(Gvec, dtype=int), KENERGY
 
+def find_HOB(eig_file="EIGENVAL"):
+    """
+    Finds highest occupied band via eigenvalue file.
+    """
+    f=open(eig_file,"r")
+    lines=f.readlines()[8:]
+    f.close()
+    hob1=0
+    hob2=0
+    for line in lines:
+        line = line.split()
+        if line[3] != "0.000000":
+            hob1 = int(line[0])
+        if line[4] != "0.000000":
+            hob2 = int(line[0])
+    return max(hob1, hob2)
+
+def calc_ipr(wf_file, spin_channel, HOB, grid_mult=1, extent = 15):
+    """
+    Calculates inverse participation ratio for 30 (default) bands around the highest
+    occupied band.
+    Inputs:
+        wf_file: string that is the path to a WAVECAR file
+        spin_channel: 1 or 2 for spin up or down
+        HOB: highest occupied band (integer)
+        grid_mult: makes realspace grid denser
+        extent: how many bands above and below the HOB are considered
+    """
+    wav = vaspwfc(wf_file, lgamma=True)
+
+    # Grid density can be increased but this makes this script slower
+    grid = wav._ngrid.copy() * grid_mult
+
+    iprs = []
+
+    bands = range(HOB-extent,HOB+extent)
+    for b in bands:
+        ks = [spin_channel,1,b]
+        realwf = wav.wfc_r(*ks, ngrid=grid)
+        wf_abs = np.abs(realwf)
+        temp = np.sum(wf_abs**4)
+        iprs.append(temp)
+
+    print(realwf.shape)
+    return iprs
+
+def find_vb_and_cb(eig_file, wf_file):
+    """
+    Finds valance band maximum and conduction band minimum.
+    Assumes that no orbitals are excited from or to delocalized states.
+    Inputs:
+        eig_file: string that is the path to a EIGENVAL file
+        wf_file: string that is the path to a WAVECAR file
+    returns:
+        eigenvalues of VBM and CBm
+        iprs in an array
+    """
+    HOB = find_HOB(eig_file)
+    iprs = calc_ipr(wf_file, 1, HOB)
+    ipr_avg = np.average(iprs)
+
+    f=open(eig_file,"r")
+    lines=f.readlines()[7-15+HOB:HOB+15+7]
+    f.close()
+    vb = 0
+    cb = 0
+
+    for n, ipr in enumerate(iprs):
+        line = lines[n].split()
+        if ipr < ipr_avg and line[3] == "1.000000":
+            vb = float(line[1])
+
+        if ipr < ipr_avg and line[3] == "0.000000" and cb == 0:
+            cb = float(line[1])
+
+    return vb, cb, iprs
+
 def openf(filename):
     """
     Opens file in read mode, either regular or compressed

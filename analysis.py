@@ -343,11 +343,11 @@ def get_csm(ch_table, chars, mult, irrep_tol):
 
         proj_r = np.real(proj)
         if abs(np.imag(proj)) > irrep_tol:
-            irrep_csm.append(111.1)
+            irrep_csm.append(-404)
         else:
-            irrep_csm.append(round(100-100*proj_r,1))
+            irrep_csm.append(round(100*proj_r,1))
     if irrep_csm == []:
-        irrep_csm = 100*np.ones(len(ch_table[1:]))
+        irrep_csm = 100*np.zeros(len(ch_table[1:]))
     return irrep_csm
 
 def gather_csm(eig_file, name, spin_i, lower_b, upper_b, Sym_ops, PGname, folder_path_out, settings):
@@ -421,8 +421,8 @@ def csm_main(s1bands, s2bands, PGname, Sym_ops, settings, eig_file = "EIGENVAL",
     csm_path = os.path.join(folder_path_out,"CSM"+name+".txt")
     file = open(csm_path,"w+")
     file.write("Continous Symmetry Measure\n")
-    file.write("0 = Symmetric, 100 = Fully Asymmetric\n")
-    file.write("111.1 = Error, imaginary component too large\n")
+    file.write("100 = Symmetric, 0 = Fully Asymmetric\n")
+    file.write("-404 = Error, imaginary component too large\n")
     file.write("\nPoint group: "+PGname+"\n")
 
     file.write("Spin Up: \n")

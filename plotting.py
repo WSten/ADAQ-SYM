@@ -43,7 +43,7 @@ def fancy_subscript(string, lowercase):
     new_string  += ''
     return new_string
 
-def plot_transitions(allowed_tr, spin, labels):
+def plot_transitions(allowed_tr, spin, labels, vb):
     """
 
     """
@@ -80,7 +80,7 @@ def plot_transitions(allowed_tr, spin, labels):
 
         # Draw arrow between initial and final band
         diff = float(tr[4])-float(tr[1])
-        plt.arrow(x_pos,float(tr[1]), 0, 0.99*diff, color=c,\
+        plt.arrow(x_pos,float(tr[1])-vb, 0, 0.99*diff, color=c,\
                     length_includes_head=True, width=0.1, head_length = abs(diff)/10)
 
         if len(allowed_tr) != 1:
@@ -101,7 +101,7 @@ def generate_handles(labels):
 
     return handles
 
-def plot_eigen(band_info, spin):
+def plot_eigen(band_info, spin, vb):
     """
 
     """
@@ -112,7 +112,7 @@ def plot_eigen(band_info, spin):
     # readable diagram.
 
     for i, state in enumerate(band_info):
-        eig = float(state[1])
+        eig = float(state[1])-vb
 
         # Left and right bounds of energy level line
         if spin == 1:
@@ -169,32 +169,22 @@ def plot_eigen(band_info, spin):
 
     return 0
 
-def plot_ipr(HOB, eig_file, wf_file, ax):
+def plot_ipr(HOB, eig_file, vb, ipr_both, ax, folder_path):
     """
 
     """
 
     #ax1 = plt.subplot(gs[1])
     plt.margins(0,0,tight=True)
-    #plt.ylim(8.3, 14.3)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(True)
     ax.spines['left'].set_visible(True)
-    #ax1.invert_xaxis()
-    #ax1.yaxis.tick_right()
-    #ax1.set_yticklabels([])
 
-    wav = vaspwfc(wf_file, lgamma=True)
-
-    # Grid density can be increased but this makes this script slower
-    grid = wav._ngrid.copy() * 1
-
-    # How many bands above and below HOB are considered for IPR
-    extent = 15
     ipr_max = 0
     bands = range(HOB-extent,HOB+extent)
     for spin_channel in (1,2):
+        """
         iprs = []
         for b in bands:
             ks = [spin_channel,1,b]
@@ -202,7 +192,8 @@ def plot_ipr(HOB, eig_file, wf_file, ax):
             wf_abs = np.abs(realwf)
             temp = np.sum(wf_abs**4)/np.sum(wf_abs**2)**2
             iprs.append(1000*temp) # IPR scaled by 1000 for readability
-
+        """
+        iprs = np.array(ipr_both[spin_channel-1])*1000
         ipr_max = np.max([ipr_max, np.max(iprs)])
         ipr_avg = np.average(iprs)
 
@@ -217,7 +208,7 @@ def plot_ipr(HOB, eig_file, wf_file, ax):
         file.close()
         eigenvalues = []
         for b in bands:
-            eigenvalues.append(float(contents[b+7].split()[spin_channel]))
+            eigenvalues.append(float(contents[b+7].split()[spin_channel])-vb)
 
         if spin_channel == 1:
             c = 'm'
@@ -241,7 +232,7 @@ def plot_ipr(HOB, eig_file, wf_file, ax):
 
     return ax
 
-def plot_levels_and_ipr(folder_path, plotname, HOB, eig_file= "EIGENVAL", filename="", wf_file="WAVECAR"):
+def plot_levels_and_ipr(folder_path, plotname, eig_file= "EIGENVAL", filename="", wf_file="WAVECAR"):
 
     plt.rcParams['axes.linewidth'] = 2
     plt.rcParams['xtick.major.size'] = 6
@@ -256,12 +247,13 @@ def plot_levels_and_ipr(folder_path, plotname, HOB, eig_file= "EIGENVAL", filena
     plt.rcParams['ytick.labelsize'] = 15
     plt.rcParams["figure.figsize"] = (14.4,7.2)
 
-    HOB = int(HOB)
-
+    HOB = find_HOB(eig_file)
+    vb, cb, iprs1 = find_vb_and_cb(eig_file, wf_file)
+    iprs2 = calc_ipr(wf_file, 2, HOB)
     gs = gridspec.GridSpec(1, 2, width_ratios=[3, 1])
     plt.margins(0,0,tight=True)
     ax1 = plt.subplot(gs[1])
-    ax1 = plot_ipr(HOB, eig_file, wf_file, ax1)
+    ax1 = plot_ipr(HOB, eig_file, vb, [iprs1, iprs2], ax1, folder_path)
     plt.subplots_adjust(wspace=0.22)
 
 
@@ -302,12 +294,12 @@ def plot_levels_one_spin(folder_path, filename, plotname, eig_file):
     vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), band_info[0][0], band_info[-1][0], spin)
 
     #plt.hlines(vb,0,10, linestyles='dashed')
-    plt.text(-0.9,vb-0.22,"VB",fontsize=12)
+    plt.text(-0.9,-0.22,"VB",fontsize=12)
     #plt.hlines(cb,0,10, linestyles='dashed')
-    plt.text(-0.9,cb+0.02,"CB",fontsize=12)
+    plt.text(-0.9,cb-vb+0.02,"CB",fontsize=12)
     ax = plt.gca()
-    vbrect = patches.Rectangle((0,vb),10,-0.6, color="0.7")
-    cbrect = patches.Rectangle((0,cb),10,0.5, color="0.7")
+    vbrect = patches.Rectangle((0,0),10,-0.6, color="0.7")
+    cbrect = patches.Rectangle((0,cb-vb),10,0.5, color="0.7")
     ax.add_patch(vbrect)
     ax.add_patch(cbrect)
 
@@ -329,13 +321,13 @@ def plot_levels_one_spin(folder_path, filename, plotname, eig_file):
         principal_axis = [round(p / max(principal_axis, key=abs), 3) for p in principal_axis]
 
     #vb = vb -0.75
-    plt.text(0,cb+1.00, "Point group: "+fancy_subscript(Pointgroup, False), fontsize=12)
-    plt.text(0,cb+0.65, "Principal axis: "+str(principal_axis), fontsize=12)
+    plt.text(0,cb-vb+1.00, "Point group: "+fancy_subscript(Pointgroup, False), fontsize=12)
+    plt.text(0,cb-vb+0.65, "Principal axis: "+str(principal_axis), fontsize=12)
 
     labels = []
-    labels = plot_transitions(allowed_tr, spin, labels)
+    labels = plot_transitions(allowed_tr, spin, labels, vb)
     handles = generate_handles(labels)
-    plot_eigen(band_info, spin)
+    plot_eigen(band_info, spin, vb)
 
     plt.xlim([-1, 15])
     plt.ylabel("Eigenvalue [eV]", fontsize=15)
@@ -381,18 +373,18 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
     f.close()
 
     # Get and draw vb and cb
-    vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), band_info2[4][0], band_info2[-1][0], 2)
+    vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), band_info2[0][0], band_info2[-1][0], 2)
 
     # Manual VB and CB for Diamond
     #vb=9.048191
     #cb=14.342933
 
-    plt.text(-0.85,vb-0.35,"VB",fontsize=20)
-    plt.text(-0.85,cb+0.15,"CB",fontsize=20)
+    plt.text(-0.85,-0.35,"VB",fontsize=20)
+    plt.text(-0.85,cb-vb+0.15,"CB",fontsize=20)
 
     ax = plt.gca()
-    vbrect = patches.Rectangle((0,vb),10,-0.7, color="0.7")
-    cbrect = patches.Rectangle((0,cb),10,0.7, color="0.7")
+    vbrect = patches.Rectangle((0,0),10,-0.7, color="0.7")
+    cbrect = patches.Rectangle((0,cb-vb),10,0.7, color="0.7")
     ax.add_patch(vbrect)
     ax.add_patch(cbrect)
 
@@ -417,19 +409,19 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
         principal_axis = np.array(ov[0][1][1][2])
         principal_axis = [round(p / max(principal_axis, key=abs), 3) for p in principal_axis]
 
-    plt.text(0,cb+1.30, "Point group: "+fancy_subscript(Pointgroup, False), fontsize=20)
-    plt.text(0,cb+0.95, "Principal axis: "+str(principal_axis), fontsize=20)
+    plt.text(0,cb-vb+1.30, "Point group: "+fancy_subscript(Pointgroup, False), fontsize=20)
+    plt.text(0,cb-vb+0.95, "Principal axis: "+str(principal_axis), fontsize=20)
 
     labels = []
-    labels = plot_transitions(allowed_tr1, 1, labels)
-    labels = plot_transitions(allowed_tr2, 2, labels)
+    labels = plot_transitions(allowed_tr1, 1, labels, vb)
+    labels = plot_transitions(allowed_tr2, 2, labels, vb)
     handles = generate_handles(labels)
 
-    plot_eigen(band_info1, 1)
-    plot_eigen(band_info2, 2)
+    plot_eigen(band_info1, 1, vb)
+    plot_eigen(band_info2, 2, vb)
 
     plt.xlim([-1, 12])
-    plt.ylim([vb-1, cb+1])
+    plt.ylim([-1, cb-vb+1])
     plt.ylabel("Eigenvalue [eV]", fontsize=20)
 
     #ytic_pos = [vb+i for i in range(7)]
@@ -441,8 +433,8 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
     plt.subplots_adjust(left=0.160)
     #plt.legend(handles = handles, fontsize=15)
     plt.legend(handles = handles, bbox_to_anchor=(0.35, 0.80), fontsize=22)
-    #plt.savefig(folder_path+"/Tr_"+plotname+".png")
-    plt.savefig(folder_path+"/Tr_"+plotname+".svg", format='svg')
+    plt.savefig(folder_path+"/Tr_"+plotname+".png")
+    #plt.savefig(folder_path+"/Tr_"+plotname+".svg", format='svg')
 
 
     return 0
@@ -452,4 +444,4 @@ if __name__ == "__main__":
 
     #plot_levels(sys.argv[1], sys.argv[2])
     #plot_levels_one_spin(sys.argv[1], sys.argv[3], sys.argv[2], "EIGENVAL")
-    plot_levels_and_ipr(sys.argv[1], sys.argv[2], sys.argv[3])
+    plot_levels_and_ipr(sys.argv[1], sys.argv[2])

@@ -11,7 +11,7 @@ The code only works for defects simulated in VASP.
 * matplotlib
 * AFLOW-SYM, follow the instructions at http://www.aflowlib.org/install-aflow/, add AFLOW to your PATH and PYTHONPATH
 * VaspBandUnfolding, follow the instructions at https://github.com/QijingZheng/VaspBandUnfolding
-* Character table files, see instructions below http://gernot-katzers-spice-pages.com/character_tables/
+* Character table files, from http://www.gernot-katzers-spice-pages.com/character_tables, see instructions below
 
 ### Instructions
 
