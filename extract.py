@@ -635,7 +635,7 @@ def get_transformation_matrix(pos_file):
         vectors.append(temp_row)
         temp_row = []
 
-    return vectors
+    return np.array(vectors)
 
 def latticel2norm(vector,pos_file):
     """
@@ -648,7 +648,7 @@ def latticel2norm(vector,pos_file):
     """
 
     T = get_transformation_matrix(pos_file)
-    cart_vec = T*vector
+    cart_vec = np.linalg.inv(T).dot(vector)
 
     return np.linalg.norm(cart_vec)
 

@@ -11,6 +11,8 @@ import time
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib import gridspec
+import matplotlib.lines as mlines
+from matplotlib.markers import MarkerStyle
 import math as m
 import sys
 
@@ -90,13 +92,13 @@ def plot_transitions(allowed_tr, spin, labels, vb):
 
 def generate_handles(labels):
     """
-
+    Takes the labels and colors and prepares handles to be enterd into legend.
     """
 
     handles = []
     labels = list(set(labels))
     for c, p in labels:
-        label_line = plt.vlines([], [], 0, color=c, label=p)
+        label_line = plt.scatter([], [], color=c, linestyle='solid', marker=u'$\u279E$', label=p, s=1000)
         handles.append(label_line)
 
     return handles
@@ -182,6 +184,7 @@ def plot_ipr(HOB, eig_file, vb, ipr_both, ax, folder_path):
     ax.spines['left'].set_visible(True)
 
     ipr_max = 0
+    extent = 15
     bands = range(HOB-extent,HOB+extent)
     for spin_channel in (1,2):
         """
@@ -343,7 +346,7 @@ def plot_levels_one_spin(folder_path, filename, plotname, eig_file):
 
     return 0
 
-def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
+def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", pos_file="CONTCAR", filename=""):
     """
     Plots an eigenvalue level diagram of the single particle states,
     irreducible representation is shown for each level, and allowed transitions
@@ -407,10 +410,13 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
         principal_axis = np.array([0,0,0])
     else:
         principal_axis = np.array(ov[0][1][1][2])
+        T = get_transformation_matrix(pos_file)
+        principal_axis = np.linalg.inv(T).dot(principal_axis)
         principal_axis = [round(p / max(principal_axis, key=abs), 3) for p in principal_axis]
 
+
     plt.text(0,cb-vb+1.30, "Point group: "+fancy_subscript(Pointgroup, False), fontsize=20)
-    plt.text(0,cb-vb+0.95, "Principal axis: "+str(principal_axis), fontsize=20)
+    plt.text(0,cb-vb+0.90, "Principal axis: "+str(principal_axis), fontsize=20)
 
     labels = []
     labels = plot_transitions(allowed_tr1, 1, labels, vb)
@@ -433,8 +439,8 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
     plt.subplots_adjust(left=0.160)
     #plt.legend(handles = handles, fontsize=15)
     plt.legend(handles = handles, bbox_to_anchor=(0.35, 0.80), fontsize=22)
-    plt.savefig(folder_path+"/Tr_"+plotname+".png")
-    #plt.savefig(folder_path+"/Tr_"+plotname+".svg", format='svg')
+    #plt.savefig(folder_path+"/Tr_"+plotname+".png")
+    plt.savefig(folder_path+"/Tr_"+plotname+".svg", format='svg')
 
 
     return 0
@@ -442,6 +448,6 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", filename=""):
 if __name__ == "__main__":
 
 
-    #plot_levels(sys.argv[1], sys.argv[2])
+    plot_levels(sys.argv[1], sys.argv[2])
     #plot_levels_one_spin(sys.argv[1], sys.argv[3], sys.argv[2], "EIGENVAL")
-    plot_levels_and_ipr(sys.argv[1], sys.argv[2])
+    #plot_levels_and_ipr(sys.argv[1], sys.argv[2])
