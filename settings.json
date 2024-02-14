@@ -4,7 +4,7 @@
  "round_if_close": false,
  "round_if_close_tolerance": 0.05,
  "IR_tolerance": 0.05,
- "tdm_IR_from_IR": true,
+ "tdm_IR_from_IR": false,
  "Gvec_reduction": 0.20,
  "Gammapoint_calc": true,
  "realgrid_mult": 4,

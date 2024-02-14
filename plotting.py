@@ -134,7 +134,7 @@ def plot_eigen(band_info, spin, vb):
             linestyle = "solid"
 
         # Draw energy level line
-        plt.hlines(eig,x_left,x_right,linestyles=linestyle)
+        plt.hlines(eig,x_left,x_right,linestyles=linestyle, color='k')
         width=0.06
 
         # Shift position of arrows indicating an occupied band
@@ -235,7 +235,7 @@ def plot_ipr(HOB, eig_file, vb, ipr_both, ax, folder_path):
 
     return ax
 
-def plot_levels_and_ipr(folder_path, plotname, eig_file= "EIGENVAL", filename="", wf_file="WAVECAR"):
+def plot_levels_and_ipr(folder_path, plotname, eig_file= "EIGENVAL", filename="", wf_file="WAVECAR", vb = None, cb = None):
 
     plt.rcParams['axes.linewidth'] = 2
     plt.rcParams['xtick.major.size'] = 6
@@ -263,7 +263,7 @@ def plot_levels_and_ipr(folder_path, plotname, eig_file= "EIGENVAL", filename=""
     #ax2 = plt.subplot(1,2,2)
     ax2 = plt.subplot(gs[0], sharey=ax1)
     plt.margins(0,0,tight=True)
-    plot_levels(folder_path, plotname)
+    plot_levels(folder_path, plotname, vb=vb, cb=cb)
 
 
 
@@ -271,7 +271,7 @@ def plot_levels_and_ipr(folder_path, plotname, eig_file= "EIGENVAL", filename=""
 
     return 0
 
-def plot_levels_one_spin(folder_path, filename, plotname, eig_file):
+def plot_levels_one_spin(folder_path, filename, plotname, eig_file, vb = None, cb = None):
 
     plt.rcParams['axes.linewidth'] = 2
     plt.rcParams['xtick.major.size'] = 5
@@ -293,8 +293,8 @@ def plot_levels_one_spin(folder_path, filename, plotname, eig_file):
     f.close()
 
     spin = int(list(filename)[-1])
-
-    vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), band_info[0][0], band_info[-1][0], spin)
+    if vb == None and cb == None:
+        vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), band_info[0][0], band_info[-1][0], spin)
 
     #plt.hlines(vb,0,10, linestyles='dashed')
     plt.text(-0.9,-0.22,"VB",fontsize=12)
@@ -346,7 +346,7 @@ def plot_levels_one_spin(folder_path, filename, plotname, eig_file):
 
     return 0
 
-def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", pos_file="CONTCAR", filename=""):
+def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", pos_file="CONTCAR", filename="", vb=None, cb=None):
     """
     Plots an eigenvalue level diagram of the single particle states,
     irreducible representation is shown for each level, and allowed transitions
@@ -376,11 +376,8 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", pos_file="CONTCAR",
     f.close()
 
     # Get and draw vb and cb
-    vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), band_info2[0][0], band_info2[-1][0], 2)
-
-    # Manual VB and CB for Diamond
-    #vb=9.048191
-    #cb=14.342933
+    if vb == None and cb == None:
+        vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), band_info2[0][0], band_info2[-1][0], 2)
 
     plt.text(-0.85,-0.35,"VB",fontsize=20)
     plt.text(-0.85,cb-vb+0.15,"CB",fontsize=20)
@@ -447,7 +444,11 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", pos_file="CONTCAR",
 
 if __name__ == "__main__":
 
+    # Manual VB and CB for Diamond
+    #vb=9.048191
+    #cb=14.342933
 
-    plot_levels(sys.argv[1], sys.argv[2])
-    #plot_levels_one_spin(sys.argv[1], sys.argv[3], sys.argv[2], "EIGENVAL")
+    #plot_levels(sys.argv[1], sys.argv[2])
+    #plot_levels(sys.argv[1], sys.argv[2], vb=9.048191 , cb=14.342933)
     #plot_levels_and_ipr(sys.argv[1], sys.argv[2])
+    plot_levels_and_ipr(sys.argv[1], sys.argv[2], vb=9.048191 , cb=14.342933)
