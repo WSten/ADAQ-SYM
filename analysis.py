@@ -162,8 +162,8 @@ def order_columns_old(Sym_ops, name, settings, ch_table):
         elif symb == "sv" or symb == "sd" or symb == "sh":
             symb = "S2"
             symb_2 = "s"
-        elif symb == "S6": # !!!!???? S_n vs S_2n
-            symb = "S3"
+        elif symb == "S3": # S_n vs S_2n
+            symb = "S6"
         elif symb == "C2'" or symb == "C2''" or symb == 'C2"':
             symb = "C2"
         print(symb, symb_2)
@@ -230,8 +230,8 @@ def order_columns(Sym_ops, name, settings, ch_table):
         elif symb == "sv" or symb == "sd" or symb == "sh":
             symb = "S2"
             symb_2 = "s"
-        elif symb == "S6": # !!!!???? S_n vs S_2n
-            symb = "S3"
+        elif symb == "S3": # S_n vs S_2n
+            symb = "S6"
         elif symb == "C2'" or symb == "C2''" or symb == 'C2"':
             symb = "C2"
         occurance = [j for j, n in enumerate(class_symbols) if n == symb or n == symb_2]
@@ -274,10 +274,11 @@ def get_rep(ch_table, chars, mult, irrep_tol):
     irreps = []
     #ch = np.asfarray(chars,float)
     ch = chars
-
+    print(ch)
     for row in ch_table[1:]:
         irr = row[0]
         row = np.array(list(int(r) for r in row[1:]))
+        print(row)
         proj = np.dot(mult*row,ch)/sum(mult)
         #print(dot_p)
 
@@ -618,11 +619,10 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
 
     settings = load_settings(settings_file)
 
-    PGname = get_pointgroup(pos_file, settings)
-    print("Point group: ",PGname)
     sym = Symmetry()
-    Sym_ops = get_symmetry_operators(sym, pos_file, PGname, settings)
-
+    PGname, Sym_ops = get_symmetry_operators(sym, pos_file, settings)
+    print("Point group: ",PGname)
+    print(Sym_ops)
 
 
     # Initial overlap and analysis for spin up channel
@@ -707,7 +707,7 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
         file.close()
 
     write_overlaps_to_text_fancy(PGname, folder_path_out, name, settings)
-    csm_main(s1bands, s2bands, PGname, Sym_ops, settings)
+    csm_main(s1bands, s2bands, PGname, Sym_ops, settings, eig_file=eig_file, folder_path_out=folder_path_out)
 
     return 0
 
@@ -731,10 +731,10 @@ def analyse_subset(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", 
 
     settings = load_settings(settings_file)
 
-    PGname = get_pointgroup(pos_file, settings)
-    print("Point group: ",PGname)
     sym = Symmetry()
-    Sym_ops = get_symmetry_operators(sym, pos_file, PGname, settings)
+    PGname, Sym_ops = get_symmetry_operators(sym, pos_file, settings)
+    print("Point group: ",PGname)
+    print(Sym_ops)
 
 
     """
@@ -804,7 +804,7 @@ def analyse_subset(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", 
     name = newname+name
 
     write_overlaps_to_text_fancy(PGname, folder_path_out, name, settings)
-    csm_main(s1bands, s2bands, PGname, Sym_ops, settings, name=name)
+    csm_main(s1bands, s2bands, PGname, Sym_ops, settings, name=name, eig_file=eig_file, folder_path_out=folder_path_out)
 
     return 0
 

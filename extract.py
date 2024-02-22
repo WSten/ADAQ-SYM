@@ -73,7 +73,7 @@ def get_symmetry_operators_old(sym, pos_file, settings):
         axis.append(out[i]['axis'])
     return symbols, matrices, axis, angle
 
-def get_symmetry_operators(sym, pos_file, PGname, settings):
+def get_symmetry_operators(sym, pos_file, settings):
     """
     Fetches symmetry operator names/symbols and matrices, and
     sorts them into conjugacy classes like in the character table.
@@ -90,11 +90,22 @@ def get_symmetry_operators(sym, pos_file, PGname, settings):
         Axis of rotation
         Angle rotated
     """
-
-    out_json = subprocess.check_output("aflow --pgroup_xtal="+str(settings['aflow_tolerance'])+" --print=json --screen_only < "+pos_file, shell=True)
-
-    out = json.loads(out_json)['pgroup_xtal']
-
+    
+    pg = subprocess.run("aflow --pgroup_xtal="+str(settings['aflow_tolerance'])+ \
+    " --print=json < "+pos_file+" | awk '/Schoenflies/ {print $NF}' | tail -1", shell=True, \
+    check=True, text=True, capture_output=True).stdout
+    subprocess.run("unxz aflow.pgroup_xtal.json.xz" ,shell=True)
+    PGname = group_name_conv(pg)
+    
+    with open('aflow.pgroup_xtal.json') as json_data:
+        out = json.load(json_data)
+        json_data.close()
+    
+    subprocess.run("rm aflow.*.json.xz" ,shell=True)
+    subprocess.run("rm aflow.*.json" ,shell=True)
+    #out_json = subprocess.check_output("aflow --pgroup_xtal="+str(settings['aflow_tolerance'])+" --print=json --screen_only < "+pos_file, shell=True)
+    #out = json.loads(out_json)['pgroup_xtal']
+    
     l = []
     for i in range(len(out)):
         l.append((out[i]['Schoenflies'],i))
@@ -140,8 +151,8 @@ def get_symmetry_operators(sym, pos_file, PGname, settings):
         elif symb == "sv" or symb == "sd" or symb == "sh":
             symb = "S2"
             symb_2 = "s"
-        elif symb == "S6": # !!!!!????? S_n vs S_2n
-            symb = "S3"
+        elif symb == "S3": # S_n vs S_2n
+            symb = "S6"
         elif symb == "C2'" or symb == "C2''" or symb == 'C2"':
             symb = "C2"
 
@@ -168,7 +179,7 @@ def get_symmetry_operators(sym, pos_file, PGname, settings):
         angle.append(angle1[i])
         axis.append(axis1[i])
 
-    return symbols, matrices, axis, angle
+    return PGname, [symbols, matrices, axis, angle]
 
 def sort_into_classes(sym_ops, symbols):
     """

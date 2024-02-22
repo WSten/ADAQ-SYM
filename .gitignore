@@ -4,3 +4,4 @@ __pycache__
 slurm*
 *.png
 *.pyc
+run_adaq_sym.py
