@@ -900,10 +900,10 @@ def find_vb_and_cb(eig_file, wf_file):
 
     for n, ipr in enumerate(iprs):
         line = lines[n].split()
-        if ipr < ipr_avg and line[3] == "1.000000":
+        if ipr < 0.0001 and line[3] == "1.000000":
             vb = float(line[1])
 
-        if ipr < ipr_avg and line[3] == "0.000000" and cb == 0:
+        if ipr < 0.0001 and line[3] == "0.000000" and cb == 0:
             cb = float(line[1])
 
     return vb, cb, iprs

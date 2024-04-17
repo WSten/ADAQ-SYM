@@ -33,15 +33,24 @@ def fancy_subscript(string, lowercase):
     for s in string.split():
         new_string += s[0]
         if len(s) == 1:
+            new_string += ' '
             continue
-        elif s[1] == "'":
+            
+        elif s[-1] == "'":
+            if len(s[1:]) > 1:
+                new_string += '$_{'+s[1:-1]+'}$'
             new_string += "\'"
-        elif s[1] == '"':
+            
+        elif s[-1] == '"':
+            if len(s[1:]) > 1:
+                new_string += '$_{'+s[1:-1]+'}$'
             new_string += '"'
+            
         else:
             new_string += '$_{'+s[1:]+'}$'
 
         new_string += ' '
+
     new_string  += ''
     return new_string
 
@@ -448,7 +457,7 @@ if __name__ == "__main__":
     #vb=9.048191
     #cb=14.342933
 
-    #plot_levels(sys.argv[1], sys.argv[2])
+    plot_levels(sys.argv[1], sys.argv[2])
     #plot_levels(sys.argv[1], sys.argv[2], vb=9.048191 , cb=14.342933)
     #plot_levels_and_ipr(sys.argv[1], sys.argv[2])
-    plot_levels_and_ipr(sys.argv[1], sys.argv[2], vb=9.048191 , cb=14.342933)
+    #plot_levels_and_ipr(sys.argv[1], sys.argv[2], vb=9.048191 , cb=14.342933)

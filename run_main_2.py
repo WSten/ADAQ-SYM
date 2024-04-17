@@ -13,7 +13,7 @@ iprs1 = calc_ipr(wf_file,1,HOB)
 ipr1_avg = np.average(iprs1)
 s1bands = []
 for n, ipr in enumerate(iprs1):
-    if ipr > 2*ipr1_avg:
+    if ipr > 0.0001:
         print(HOB-15+n, ipr)
         s1bands.append(HOB-15+n)
 
@@ -21,7 +21,7 @@ iprs2 = calc_ipr(wf_file,2,HOB)
 ipr2_avg = np.average(iprs2)
 s2bands = []
 for n, ipr in enumerate(iprs2):
-    if ipr > 2*ipr2_avg:
+    if ipr > 0.0001:
         #print(HOB-15+n, ipr)
         s2bands.append(HOB-15+n)
 

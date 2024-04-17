@@ -274,11 +274,11 @@ def get_rep(ch_table, chars, mult, irrep_tol):
     irreps = []
     #ch = np.asfarray(chars,float)
     ch = chars
-    print(ch)
+    #print(ch)
     for row in ch_table[1:]:
         irr = row[0]
         row = np.array(list(int(r) for r in row[1:]))
-        print(row)
+        #print(row)
         proj = np.dot(mult*row,ch)/sum(mult)
         #print(dot_p)
 
