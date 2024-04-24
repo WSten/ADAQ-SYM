@@ -46,7 +46,7 @@ Wave function in ```WAVECAR```, atomic positions in ```POSCAR``` or ```CONTCAR``
 The default names of these files the code looks for are: ```WAVECAR```, ```CONTCAR``` and ```EIGENVAL```. If you have other filenames they need to be specified as arguments to main().
 
 Two arrays with indices of the considered bands in each spin channel are required.
-E.g. ```main([1025,1026,1127], [1024,1025,1026,1127])```. This can easily be generated with the ```run_main.py``` script.
+E.g. ```main([1025,1026,1127], [1024,1025,1026,1127])```. This can easily be generated with the ```run_main.py``` or ```run_main_2.py``` script.
 
 There are options of setting a nametag to the output files, and where the output files are written.
 
