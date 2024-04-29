@@ -8,8 +8,8 @@ from extract import *
 from aflow_sym_python import Symmetry
 from pprint import pprint
 import os
-import pickle
-
+import json
+import ast
 
 def calc_overlap(Coeff, gvec, Sym_op, center, settings):
     """
@@ -68,23 +68,24 @@ def get_overlap_list(Coeff, gvec, Sym_ops, center, settings):
         index, symbol, axis, angle and overlap for each operator
     """
     # Identity operator is trivial
-    ov_list = [[0,Sym_ops[0][0], Sym_ops[2][0], Sym_ops[3][0], np.real_if_close(np.sum(Coeff*Coeff.conj())).tolist()]]
+    symmetry_info = [[0,Sym_ops[0][0], Sym_ops[2][0], Sym_ops[3][0]]]
+    ov_list = [np.real_if_close(np.sum(Coeff*Coeff.conj())).tolist()]
 
     # Loop over each symmetry operator
     for i, S in enumerate(Sym_ops[1][1:]):
 
         overlap = calc_overlap(Coeff, gvec, S, center, settings)
         i +=1
-        ov_list.append([i, Sym_ops[0][i], Sym_ops[2][i], Sym_ops[3][i], np.real_if_close(overlap).tolist()])
-
-    normalizer = 1 / ov_list[0][4]
+        ov_list.append(np.real_if_close(overlap).tolist())
+        symmetry_info.append([i, Sym_ops[0][i], Sym_ops[2][i], Sym_ops[3][i]])
+    normalizer = 1 / ov_list[0]
 
     for i in range(len(ov_list)):
-        ov_list[i][4] = ov_list[i][4]*normalizer
+        ov_list[i] = ov_list[i]*normalizer
 
-    return ov_list
+    return ov_list, symmetry_info
 
-def get_overlaps_of_bands(wf_file, name, spin, lower_b, upper_b, centers, Sym_ops, folder_path_out, settings):
+def get_overlaps_of_bands(wf_file, name, spin, lower_b, upper_b, centers, PGname, Sym_ops, folder_path_out, settings):
     """
     Calculate overlaps for all bands and all symmetries.
 
@@ -133,18 +134,14 @@ def get_overlaps_of_bands(wf_file, name, spin, lower_b, upper_b, centers, Sym_op
         #Coeffs = truncate_coeffs(Coeffs, KENERGY, encut, G_reduction)
         Coeffs = Coeffs[np.where(KENERGY < encut_trunc)[0]]
 
-        ov_list = get_overlap_list(Coeffs, Gvec, Sym_ops, centers[i], settings)
+        ov_list, symmetry_info = get_overlap_list(Coeffs, Gvec, Sym_ops, centers[i], settings)
 
         result.append([ks,ov_list])
 
+    ov_json = {"point_group": PGname, "symmetry_operators": symmetry_info, "orbitals": [{"index": result[i][0], "overlaps": str(result[i][1])} for i in range(len(result))]}
 
-    ov_path = os.path.join(folder_path_out,"Overlaps_"+name+".pickle")
-    #result = np.asanyarray(result, dtype=object)
-    #np.save(ov_path,result)
-
-    f = open(ov_path,"wb")
-    pickle.dump(result, f, protocol=2)
-    f.close()
+    with open(os.path.join(folder_path_out,"Overlaps_"+name+".json"), "w") as outfile:
+        outfile.write(json.dumps(ov_json))
 
     return result
 
@@ -350,12 +347,12 @@ def write_overlaps_to_text_fancy(PGname, folder_path_out, name, settings):
         0
     """
 
-    ov1 = os.path.join(folder_path_out,"Overlaps_"+name+"_S1.pickle")
-    ov2 = os.path.join(folder_path_out,"Overlaps_"+name+"_S2.pickle")
+    ov1 = os.path.join(folder_path_out,"Overlaps_"+name+"_S1.json")
+    ov2 = os.path.join(folder_path_out,"Overlaps_"+name+"_S2.json")
     f1 = open(ov1,"rb")
     f2 = open(ov2,"rb")
-    ov_array1 = pickle.load(f1)
-    ov_array2 = pickle.load(f2)
+    ov_array1 = json.load(f1)
+    ov_array2 = json.load(f2)
     f1.close()
     f2.close()
 
@@ -385,20 +382,20 @@ def write_overlaps_to_text_fancy(PGname, folder_path_out, name, settings):
 
     file.write("Spin up\n"+sym_string+"\n")
 
-    for orbital_info in ov_array1:
-        ov_string = f"{orbital_info[0][2]:<12}"
-        for ov_info in orbital_info[1]:
-            ov = round(np.real(ov_info[4]),rounding) + 1j*round(np.imag(ov_info[4]),rounding)
+    for orbital_info in ov_array1["orbitals"]:
+        ov_string = f"{orbital_info['index'][2]:<12}"
+        for overlap in ast.literal_eval(orbital_info["overlaps"]):
+            ov = round(np.real(overlap),rounding) + 1j*round(np.imag(overlap),rounding)
             ov = str(ov).strip('(').strip(')')
             ov_string += f"{ov:<{space}}"
         file.write(ov_string+"\n")
 
     file.write("\nSpin down\n"+sym_string+"\n")
 
-    for orbital_info in ov_array2:
-        ov_string = f"{orbital_info[0][2]:<12}"
-        for ov_info in orbital_info[1]:
-            ov = round(np.real(ov_info[4]),rounding) + 1j*round(np.imag(ov_info[4]),rounding)
+    for orbital_info in ov_array2["orbitals"]:
+        ov_string = f"{orbital_info['index'][2]:<12}"
+        for overlap in ast.literal_eval(orbital_info["overlaps"]):
+            ov = round(np.real(overlap),rounding) + 1j*round(np.imag(overlap),rounding)
             ov = str(ov).strip('(').strip(')')
             ov_string += f"{ov:<{space}}"
         file.write(ov_string+"\n")

@@ -8,6 +8,8 @@ from extract import *
 from overlap import *
 from pprint import pprint
 import pickle
+import json
+import ast
 
 def get_character(eig_file, folder_path_out, name, settings, spin_i,lower_b,upper_b,permutation):
     """
@@ -28,11 +30,11 @@ def get_character(eig_file, folder_path_out, name, settings, spin_i,lower_b,uppe
         band occupation, all output grouped by degeneracy
     """
 
-    ov_path = os.path.join(folder_path_out,"Overlaps_"+name+".pickle")
-    f = open(ov_path,"rb")
-    sym_ov_array = pickle.load(f)
+    ov_path = os.path.join(folder_path_out,"Overlaps_"+name+".json")
+    f = open(ov_path,"r")
+    sym_ov_array = json.load(f)
     f.close()
-
+    
     round_if_close = settings['round_if_close']
     tol = settings['round_if_close_tolerance']
 
@@ -42,27 +44,23 @@ def get_character(eig_file, folder_path_out, name, settings, spin_i,lower_b,uppe
 
     for deg_bands in bands_by_degen:
         temp = []
-        for sym_i in range(len(sym_ov_array[0][1])):
+        for sym_i in range(len(sym_ov_array["symmetry_operators"])):
             sum = 0
 
             for band_nr in deg_bands:
                 band_i = int(band_nr)-lower_b
-                sum = sum + sym_ov_array[band_i][1][sym_i][4]
+                #sum = sum + sym_ov_array[band_i][1][sym_i][4]
+                sum = sum + ast.literal_eval(sym_ov_array["orbitals"][band_i]["overlaps"])[sym_i]
             temp.append(sum)
         overlap_list.append(temp)
-    #print("overlap summed")
-    #pprint(overlap_list)
-    #print("____")
+
     sym_list = []
 
-    for sym_i in range(len(sym_ov_array[0][1])):
-        sym_list.append(sym_ov_array[0][1][sym_i][1])
+    for sym_i in sym_ov_array["symmetry_operators"]:
+        sym_list.append(sym_i[1])
 
-    sym_list, overlap_list = average_by_class(permutation, sym_list,overlap_list,bands_by_degen)
-    #print("After truncate")
-    #pprint(sym_list)
-    #pprint(overlap_list)
-    #print("___________")
+    sym_list, overlap_list = average_by_class(permutation, sym_list, overlap_list, bands_by_degen)
+
     character_list = []
 
     for deg_band_i in range(len(overlap_list)):
@@ -75,7 +73,7 @@ def get_character(eig_file, folder_path_out, name, settings, spin_i,lower_b,uppe
                 print("Imaginary part of overlap > "+str(tol)+" !!!")
                 print("_______")
                 file = open("Imag_char.txt","a+")
-                file.write(str(bands_by_degen[deg_band_i])+"  "+str(spin_i)+"  "+str(sym_ov_array[deg_band_i][1][sym_i][1])+"  "+str(ov)+"\n")
+                file.write(str(bands_by_degen[deg_band_i])+"  "+str(spin_i)+"  "+str(sym_ov_array["symmetry_operators"][sym_i][1])+"  "+str(ov)+"\n")
                 file.close()
             ov_r = np.real(ov)
             if abs(round(ov_r)-ov_r) < tol:
@@ -503,7 +501,7 @@ def get_allowed_transitions(char_table, position_vecs, char_list, multiplicity, 
 
                     tdm_irr = get_rep(char_table, tdm, multiplicity,irrep_tol)
 
-                    # For saving with pickle
+                    # For saving
                     tdm = tdm.tolist()
 
                     bool = (tdm_irr[0] >= 1)
@@ -576,12 +574,14 @@ def analyse_symmetry(eig_file, name, spin_i, lower_b, upper_b, Sym_ops, PGname, 
 
     #tr_array = np.asanyarray([PGname, band_info, tr],dtype=object)
     tr_array = [PGname, band_info, tr]
-    tr2_path = os.path.join(folder_path_out,"Transitions_"+name+".pickle")
-    #np.save(tr2_path, tr_array)
-    f = open(tr2_path,"wb")
-    pickle.dump(tr_array,f,protocol=2)
-    f.close()
+    tr_json = {"point_group": PGname, "orbitals": [{"index": b[0], "eigenvalue": b[1], "occupation": b[2], "representation": b[4], "characters": str(b[3])} for b in band_info], "transitions": [{"index_from": t[0], "eig_from": t[1], "IR_from": t[2], "index_to": t[3], "eig_to": t[4], "IR_from": t[5], "polarization": t[6], "polarization rep": t[7], "TDM_character": t[8], "TDM_IR": t[9], "Transition_allowed": t[10]}
+ for t in tr]}
+    
+    # Rearrange the order of how transition info is stored?
 
+
+    with open(os.path.join(folder_path_out,"Transitions_"+name+".json"), "w") as outfile:
+        outfile.write(json.dumps(tr_json))
 
     file.write("\nInitial band, eigenvalue and irrep   Final band, eigenvalue and irrep    Position vector components and irrep  \n  TDM character and rep    Transition allowed?")
 
@@ -641,7 +641,7 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
             centers_s1 = get_orbital_centers(wf_file, bands_by_degen_s1, name1, 1, lower_b_s1, upper_b_s1, folder_path_out, settings)
             print("Calculated new centers!")
         print("Spin 1")
-        res1 = get_overlaps_of_bands(wf_file, name1, 1, lower_b_s1, upper_b_s1, centers_s1, Sym_ops, folder_path_out, settings)
+        res1 = get_overlaps_of_bands(wf_file, name1, 1, lower_b_s1, upper_b_s1, centers_s1, PGname, Sym_ops, folder_path_out, settings)
         #write_overlaps_to_text(res1, folder_path_out, name1)
         no_irr_s1 = analyse_symmetry(eig_file, name1, 1, lower_b_s1, upper_b_s1, Sym_ops, PGname, folder_path_out, settings)
         good_centers_s1 = get_good_centers(name1, lower_b_s1, no_irr_s1, folder_path_out)
@@ -662,7 +662,7 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
             centers_s2 = get_orbital_centers(wf_file, bands_by_degen_s2, name2, 2, lower_b_s2, upper_b_s2, folder_path_out, settings)
             print("Calculated new centers!")
         print("Spin 2")
-        res2 = get_overlaps_of_bands(wf_file, name2, 2, lower_b_s2, upper_b_s2, centers_s2, Sym_ops, folder_path_out, settings)
+        res2 = get_overlaps_of_bands(wf_file, name2, 2, lower_b_s2, upper_b_s2, centers_s2, PGname, Sym_ops, folder_path_out, settings)
         #write_overlaps_to_text(res2, folder_path_out, name2)
         no_irr_s2 = analyse_symmetry(eig_file, name2, 2, lower_b_s2, upper_b_s2, Sym_ops, PGname, folder_path_out, settings)
         good_centers_s2 = get_good_centers(name2, lower_b_s2, no_irr_s2, folder_path_out)
@@ -686,7 +686,7 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
 
     while 0 < len(no_irr_s1) and 0 < len(good_centers_s1):
         good_centers_s1, centers_s1 = replace_bad_centers(name1, lower_b_s1, no_irr_s1, good_centers_s1, folder_path_out)
-        res1 = get_overlaps_of_bands(wf_file, name1, 1, lower_b_s1, upper_b_s1, centers_s1, Sym_ops, folder_path_out, settings)
+        res1 = get_overlaps_of_bands(wf_file, name1, 1, lower_b_s1, upper_b_s1, centers_s1, PGname, Sym_ops, folder_path_out, settings)
         #write_overlaps_to_text(res1, folder_path_out, name1)
         no_irr_s1 = analyse_symmetry(eig_file, name1, 1, lower_b_s1, upper_b_s1, Sym_ops, PGname, folder_path_out, settings)
     if len(no_irr_s1) > 0:
@@ -698,7 +698,7 @@ def main(s1bands, s2bands, pos_file = "CONTCAR", wf_file = "WAVECAR", eig_file =
 
     while 0 < len(no_irr_s2) and 0 < len(good_centers_s2):
         good_centers_s2, centers_s2 = replace_bad_centers(name2, lower_b_s2, no_irr_s2, good_centers_s2, folder_path_out)
-        res2 = get_overlaps_of_bands(wf_file, name2, 2, lower_b_s2, upper_b_s2, centers_s2, Sym_ops, folder_path_out, settings)
+        res2 = get_overlaps_of_bands(wf_file, name2, 2, lower_b_s2, upper_b_s2, centers_s2, PGname, Sym_ops, folder_path_out, settings)
         #write_overlaps_to_text(res2, folder_path_out, name2)
         no_irr_s2 = analyse_symmetry(eig_file, name2, 2, lower_b_s2, upper_b_s2, Sym_ops, PGname, folder_path_out, settings)
     if len(no_irr_s2) > 0:
