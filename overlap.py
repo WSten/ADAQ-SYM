@@ -85,7 +85,7 @@ def get_overlap_list(Coeff, gvec, Sym_ops, center, settings):
 
     return ov_list, symmetry_info
 
-def get_overlaps_of_bands(wf_file, name, spin, lower_b, upper_b, centers, PGname, Sym_ops, folder_path_out, settings):
+def get_overlaps_of_bands(wf_file, name, spin, bands, centers, PGname, Sym_ops, folder_path_out, settings):
     """
     Calculate overlaps for all bands and all symmetries.
 
@@ -93,8 +93,7 @@ def get_overlaps_of_bands(wf_file, name, spin, lower_b, upper_b, centers, PGname
         wf_file: string that is the path to a WAVECAR file
         name: string with name (numbering) of defect
         spin: 1 or 2 for spin up or down
-        lower_b: index of lowest considered band
-        upper_b: index of highest considered band
+        bands: list of band indices
         centers: list of orbital center of each band
         Sym_ops: array with symmetry operator info,
                  output for get_symmetry_operators()
@@ -127,7 +126,7 @@ def get_overlaps_of_bands(wf_file, name, spin, lower_b, upper_b, centers, PGname
     result = []
 
     # Loop of the considered bands
-    for i, band_i in enumerate(range(lower_b, upper_b+1)):
+    for i, band_i in enumerate(bands):
         ks = [spin,1,band_i]
         Coeffs = wav.readBandCoeff(*ks, norm=True)
 
@@ -198,7 +197,7 @@ def truncate_coeffs(Coeffs, KENERGY, encut, reduction):
     #new_coeffs = Coeffs[np.where(KENERGY < encut_trunc)[0]]
     return np.array(new_coeffs)
 
-def get_orbital_centers(wf_file, bands_by_degen, name, spin, lower_b, upper_b, folder_path_out, settings):
+def get_orbital_centers(wf_file, bands_by_degen, name, spin, folder_path_out, settings):
     """
     Calculates the center of the orbital between the chosen bands,
     degenerate states are considered together.
@@ -208,8 +207,6 @@ def get_orbital_centers(wf_file, bands_by_degen, name, spin, lower_b, upper_b, f
         bands_by_degen: bands grouped by degeneracy
         name: string with name (numbering) of defect
         spin: 1 or 2 for spin channel 1 or 2
-        lower_b: integer with lowest band considered
-        upper_b: integer with highest band considered
         folder_path_out: string that is the path to output directory
         settings: settings dicitonary
     Returns:
@@ -260,13 +257,13 @@ def get_orbital_centers(wf_file, bands_by_degen, name, spin, lower_b, upper_b, f
     file.close()
     return centers
 
-def get_good_centers(name, lower_b, no_irr, folder_path_out):
+def get_good_centers(name, bands, no_irr, folder_path_out):
     """
     Removes bad centers from list of centers.
 
     Inputs:
         name: string with name (numbering) of defect
-        lower_b: index of lowest considered band
+        bands: list of band indices
         no_irr: list of band indices where the center gave no irrep
         folder_path_out: string that is the path to output directory
     Returns:
@@ -277,17 +274,17 @@ def get_good_centers(name, lower_b, no_irr, folder_path_out):
     centers = np.load(c_path)
     centers2 = centers
     for band_i in no_irr:
-        c = centers[int(band_i)-lower_b]
+        c = centers[bands.index(band_i)]
         centers2 = centers2[np.all(centers2 != c,axis=1)]
     return centers2
 
-def replace_bad_centers(name, lower_b, no_irr, good_centers, folder_path_out):
+def replace_bad_centers(name, bands, no_irr, good_centers, folder_path_out):
     """
     Replaces bad centers with ones known to be good.
 
     Inputs:
         name: string with name (numbering) of defect
-        lower_b: index of lowest considered band
+        bands: list of band indices
         no_irr: list of band indices where the center gave no irrep
         good_centers: list of good centers
         folder_path_out: string that is the path to output directory
@@ -299,7 +296,7 @@ def replace_bad_centers(name, lower_b, no_irr, good_centers, folder_path_out):
     c_path = os.path.join(folder_path_out,"Centers_"+name+".npy")
     centers = np.load(c_path)
     for band_i in no_irr:
-        centers[int(band_i)-lower_b] = good_centers[0]
+        centers[bands.index(band_i)] = good_centers[0]
 
 
     c_path2 = os.path.join(folder_path_out,"Centers_"+name)

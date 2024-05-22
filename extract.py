@@ -426,7 +426,7 @@ def get_sg(sym, pos_file, settings):
 
 
 
-def get_energy_and_band_degen(eig_file,spin_i,lower_b,upper_b, settings):
+def get_energy_and_band_degen(eig_file, spin_i, bands, settings):
     """
     Extracts band index, eigenvalue and occupation,
     and sorts by degeneracy
@@ -434,8 +434,7 @@ def get_energy_and_band_degen(eig_file,spin_i,lower_b,upper_b, settings):
     Input:
         eig_file: path to EIGENVAL file
         spin_i: spin channel
-        lower_b: index of lower band
-        upper_b: index of upper band
+        bands: list of band indices
         settings: path to settings file
 
     Returns:
@@ -453,7 +452,7 @@ def get_energy_and_band_degen(eig_file,spin_i,lower_b,upper_b, settings):
     band_en = []
     band_occ = []
 
-    for i in range(lower_b,upper_b+1):
+    for i in bands:
         line = contents[i+7].split()
         band_num.append(line[0])
         if spin_i == 1:
@@ -599,7 +598,7 @@ def get_character_table(gname,settings):
 def get_vb_and_cb(eig_file, lower_b, upper_b, spin_channel):
     """
     Returns eigenvalues (energies) of the bands just below and above the
-    bands considered in the symmetry analysis.
+    bands considered in the symmetry analysis. (only gives vb and cb if only band gap orbitals are considered)
 
     Inputs:
         eig_file: path to EIGENVAL files
@@ -679,26 +678,6 @@ def gvectors_and_energy(wav, ikpt=1, force_Gamma=False, check_consistency=False)
     # force_Gamma: consider gamma-only case regardless of the actual setting
     lgam = True if force_Gamma else wav._lgam
 
-    # fx, fy, fz = [fftfreq(n) * n for n in wav._ngrid]
-    # fftfreq in scipy.fftpack is a little different with VASP frequencies
-    ############################################################
-    # Gamma version -50% memory usage and 1x speed.
-    ############################################################
-    # fx = [ii if ii < wav._ngrid[0] // 2 + 1 else ii - wav._ngrid[0]
-    #       for ii in range(
-    #           wav._ngrid[0] // 2 + 1
-    #           if (lgam and (wav._gam_half == 'x'))
-    #           else
-    #           wav._ngrid[0])]
-    # fy = [jj if jj < wav._ngrid[1] // 2 + 1 else jj - wav._ngrid[1]
-    #       for jj in range(wav._ngrid[1])]
-    # fz = [kk if kk < wav._ngrid[2] // 2 + 1 else kk - wav._ngrid[2]
-    #       for kk in range(
-    #           wav._ngrid[2] // 2 + 1
-    #           if (lgam and (wav._gam_half == 'z'))
-    #           else
-    #           wav._ngrid[2])]
-
     fx, fy, fz = [np.arange(n, dtype=int) for n in wav._ngrid]
     fx[wav._ngrid[0] // 2 + 1:] -= wav._ngrid[0]
     fy[wav._ngrid[1] // 2 + 1:] -= wav._ngrid[1]
@@ -709,41 +688,6 @@ def gvectors_and_energy(wav, ikpt=1, force_Gamma=False, check_consistency=False)
         else:
             fz = fz[:wav._ngrid[2] // 2 + 1]
 
-    # if lgam:
-    #     # parallel gamma version of VASP WAVECAR exclude some planewave
-    #     # components, -DwNGZHalf
-    #     if wav._gam_half == 'z':
-    #         kgrid = np.array([(fx[ii], fy[jj], fz[kk])
-    #                           for kk in range(wav._ngrid[2])
-    #                           for jj in range(wav._ngrid[1])
-    #                           for ii in range(wav._ngrid[0])
-    #                           if (
-    #                               (fz[kk] > 0) or
-    #                               (fz[kk] == 0 and fy[jj] > 0) or
-    #                               (fz[kk] == 0 and fy[jj]
-    #                                == 0 and fx[ii] >= 0)
-    #         )], dtype=float)
-    #     else:
-    #         kgrid = np.array([(fx[ii], fy[jj], fz[kk])
-    #                           for kk in range(wav._ngrid[2])
-    #                           for jj in range(wav._ngrid[1])
-    #                           for ii in range(wav._ngrid[0])
-    #                           if (
-    #                               (fx[ii] > 0) or
-    #                               (fx[ii] == 0 and fy[jj] > 0) or
-    #                               (fx[ii] == 0 and fy[jj]
-    #                                == 0 and fz[kk] >= 0)
-    #         )], dtype=float)
-    # else:
-    #     kgrid = np.array([(fx[ii], fy[jj], fz[kk])
-    #                       for kk in range(wav._ngrid[2])
-    #                       for jj in range(wav._ngrid[1])
-    #                       for ii in range(wav._ngrid[0])], dtype=float)
-
-    ############################################################
-    # 10x faster
-    ############################################################
-    # In meshgrid, fx run the fastest, fz the slowest
     gz, gy, gx = np.array(
         np.meshgrid(fz, fy, fx, indexing='ij')
     ).reshape((3, -1))
@@ -773,15 +717,6 @@ def gvectors_and_energy(wav, ikpt=1, force_Gamma=False, check_consistency=False)
     # Check if the calculated number of planewaves and the one recorded in the
     # WAVECAR are equal
     if check_consistency:
-        # if wav._lsoc:
-        #     assert Gvec.shape[0] == wav._nplws[ikpt - 1] // 2, \
-        #         'No. of planewaves not consistent for an SOC WAVECAR! %d %d %d' % \
-        #         (Gvec.shape[0], wav._nplws[ikpt - 1],
-        #          np.prod(wav._ngrid))
-        # else:
-        #     assert Gvec.shape[0] == wav._nplws[ikpt - 1], 'No. of planewaves not consistent! %d %d %d' % \
-        #         (Gvec.shape[0], wav._nplws[ikpt - 1],
-        #          np.prod(wav._ngrid))
 
         if Gvec.shape[0] != wav._nplws[ikpt - 1]:
             if Gvec.shape[0] * 2 == wav._nplws[ikpt - 1]:
