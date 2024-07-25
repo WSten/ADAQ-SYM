@@ -574,7 +574,7 @@ def analyse_symmetry(eig_file, name, spin_i, bands, Sym_ops, PGname, folder_path
     
     # Rearrange the order of how transition info is stored?
 
-    print(tr_json)
+    #print(tr_json)
     with open(os.path.join(folder_path_out,"Transitions_"+name+".json"), "w") as outfile:
         outfile.write(json.dumps(tr_json))
 

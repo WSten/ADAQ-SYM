@@ -90,19 +90,25 @@ def get_symmetry_operators(sym, pos_file, settings):
         Axis of rotation
         Angle rotated
     """
+
     
     pg = subprocess.run("aflow --pgroup_xtal="+str(settings['aflow_tolerance'])+ \
     " --print=json < "+pos_file+" | awk '/Schoenflies/ {print $NF}' | tail -1", shell=True, \
     check=True, text=True, capture_output=True).stdout
-    subprocess.run("unxz aflow.pgroup_xtal.json.xz" ,shell=True)
+    #pg_error = subprocess.run("aflow --pgroup_xtal="+str(settings['aflow_tolerance'])+ \
+    #" --print=json < "+pos_file+" | awk '/Schoenflies/ {print $NF}' | tail -1", shell=True, \
+    #text=True).stderr
+
+    #print("Point group: ", pg)
+    subprocess.Popen("unxz aflow.pgroup_xtal.json.xz" ,shell=True).wait()
     PGname = group_name_conv(pg)
-    
+
     with open('aflow.pgroup_xtal.json') as json_data:
         out = json.load(json_data)
         json_data.close()
     
-    subprocess.run("rm aflow.*.json.xz" ,shell=True)
-    subprocess.run("rm aflow.*.json" ,shell=True)
+    subprocess.Popen("rm aflow.*.json.xz" ,shell=True).wait()
+    subprocess.Popen("rm aflow.*.json" ,shell=True).wait()
     #out_json = subprocess.check_output("aflow --pgroup_xtal="+str(settings['aflow_tolerance'])+" --print=json --screen_only < "+pos_file, shell=True)
     #out = json.loads(out_json)['pgroup_xtal']
     

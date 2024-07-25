@@ -15,6 +15,7 @@ import matplotlib.lines as mlines
 from matplotlib.markers import MarkerStyle
 import math as m
 import sys
+import json
 
 def fancy_subscript(string, lowercase):
     """
@@ -71,27 +72,28 @@ def plot_transitions(allowed_tr, spin, labels, vb):
 
     for i, tr in enumerate(allowed_tr):
         # Determine color and labels based on polarization
-        if tr[6] == " x":
+        pol = tr["polarization"]
+        if pol == " x":
             c = 'r'
             p = '$\perp$'
-        elif tr[6] == " y":
+        elif pol == " y":
             c = 'g'
             p = '$\perp$'
-        elif tr[6] == " z":
+        elif pol == " z":
             c = 'b'
             p = '$\parallel$'
-        elif tr[6] == " x y":
+        elif pol == " x y":
             c = 'r'
             p = '$\perp$'
-        elif tr[6] == " x y z":
+        elif pol == " x y z":
             c = 'r'
             p = ''
 
-        labels.append((c,p+" "+fancy_subscript(tr[7], True)))
+        labels.append((c,p+" "+fancy_subscript(tr["polarization rep"], True)))
 
         # Draw arrow between initial and final band
-        diff = float(tr[4])-float(tr[1])
-        plt.arrow(x_pos,float(tr[1])-vb, 0, 0.99*diff, color=c,\
+        diff = float(tr["eig_to"])-float(tr["eig_from"])
+        plt.arrow(x_pos,float(tr["eig_from"])-vb, 0, 0.99*diff, color=c,\
                     length_includes_head=True, width=0.1, head_length = abs(diff)/10)
 
         if len(allowed_tr) != 1:
@@ -112,7 +114,7 @@ def generate_handles(labels):
 
     return handles
 
-def plot_eigen(band_info, spin, vb):
+def plot_eigen(orbital_info, spin, vb):
     """
 
     """
@@ -122,8 +124,8 @@ def plot_eigen(band_info, spin, vb):
     # One might need to manually adjust some of these positions to have a
     # readable diagram.
 
-    for i, state in enumerate(band_info):
-        eig = float(state[1])-vb
+    for i, state in enumerate(orbital_info):
+        eig = float(state["eigenvalue"])-vb
 
         # Left and right bounds of energy level line
         if spin == 1:
@@ -137,7 +139,7 @@ def plot_eigen(band_info, spin, vb):
         # Vertical offset
         y = 0.00
 
-        if state[2] == 0:
+        if state["occupation"] == 0:
             linestyle = "dotted"
         else:
             linestyle = "solid"
@@ -153,18 +155,18 @@ def plot_eigen(band_info, spin, vb):
         if i == 1:
             shift = 0
 
-        if state[2] == 2:
+        if state["occupation"] == 2:
             shift = -0.5
-        elif state[2] == 3:
+        elif state["occupation"] == 3:
             shift = -1
 
         # Print occupation arrows
         if spin == 1:
-            for j in range(state[2]):
+            for j in range(state["occupation"]):
                 plt.arrow(2.3+shift+j, eig-0.12, 0, 0.24, color='k', length_includes_head=False, \
                         width=width, head_width=3*width, head_length=0.1)
         else:
-            for j in range(state[2]):
+            for j in range(state["occupation"]):
                 plt.arrow(7.7+shift+j, eig+0.12, 0, -0.24, color='k', length_includes_head=False, \
                         width=width, head_width=3*width, head_length=0.1)
 
@@ -176,7 +178,7 @@ def plot_eigen(band_info, spin, vb):
             y += -0.06
 
         # Print irrep
-        plt.text(x_right+x_irrep,eig+y,fancy_subscript(str(state[4]), True),fontsize=22)
+        plt.text(x_right+x_irrep,eig+y,fancy_subscript(str(state["representation"]), True),fontsize=22)
 
     return 0
 
@@ -296,14 +298,19 @@ def plot_levels_one_spin(folder_path, filename, plotname, eig_file, vb = None, c
     #plt.rcParams["figure.figsize"] = (8,4.8)
 
     #band_info, transition_info = np.load(folder_path+"/Transitions_"+filename+".npy",allow_pickle=True)
-    tr_path = os.path.join(folder_path,"Transitions_"+filename+".pickle")
-    f = open(tr_path, "rb")
-    Pointgroup, band_info, transition_info = pickle.load(f)
+    tr_path = os.path.join(folder_path,"Transitions_"+filename+".json")
+    f = open(tr_path, "r")
+    tr = json.load(f)
     f.close()
+
+    Pointgroup = tr["point_group"]
+    orbital_info = tr["orbitals"]
+    transition_info = tr["transitions"]
+
 
     spin = int(list(filename)[-1])
     if vb == None and cb == None:
-        vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), band_info[0][0], band_info[-1][0], spin)
+        vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), orbital_info[0]["index"], orbital_info[-1]["index"], spin)
 
     #plt.hlines(vb,0,10, linestyles='dashed')
     plt.text(-0.9,-0.22,"VB",fontsize=12)
@@ -317,19 +324,19 @@ def plot_levels_one_spin(folder_path, filename, plotname, eig_file, vb = None, c
 
     allowed_tr = []
     for tr in transition_info:
-        if tr[-1]:
+        if tr["Transition_allowed"]:
             allowed_tr.append(tr)
 
 
 
-    ov_path = os.path.join(folder_path,"Overlaps_"+filename+".pickle")
-    f = open(ov_path, "rb")
-    ov = pickle.load(f)
+    ov_path = os.path.join(folder_path,"Overlaps_"+filename+".json")
+    f = open(ov_path, "r")
+    ov = json.load(f)
     f.close()
-    if len(ov[0][1]) == 1:
+    if len(ov["symmetry_operators"]) == 1:
         principal_axis = np.array([0,0,0])
     else:
-        principal_axis = np.array(ov[0][1][1][2])
+        principal_axis = np.array(ov["symmetry_operators"][1][2])
         principal_axis = [round(p / max(principal_axis, key=abs), 3) for p in principal_axis]
 
     #vb = vb -0.75
@@ -339,7 +346,7 @@ def plot_levels_one_spin(folder_path, filename, plotname, eig_file, vb = None, c
     labels = []
     labels = plot_transitions(allowed_tr, spin, labels, vb)
     handles = generate_handles(labels)
-    plot_eigen(band_info, spin, vb)
+    plot_eigen(orbital_info, spin, vb)
 
     plt.xlim([-1, 15])
     plt.ylabel("Eigenvalue [eV]", fontsize=15)
@@ -375,18 +382,26 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", pos_file="CONTCAR",
     plt.rcParams["figure.figsize"] = (9.6,7.2)
 
     # Load point group, band and transition information
-    tr_path = os.path.join(folder_path,"Transitions_"+filename+"_S1.pickle")
-    f = open(tr_path, "rb")
-    Pointgroup, band_info1, transition_info1 = pickle.load(f)
+    tr_path = os.path.join(folder_path,"Transitions_"+filename+"_S1.json")
+    f = open(tr_path, "r")
+    #Pointgroup, band_info1, transition_info1 = json.load(f)
+    tr1 = json.load(f)
     f.close()
-    tr_path = os.path.join(folder_path,"Transitions_"+filename+"_S2.pickle")
-    f = open(tr_path, "rb")
-    Pointgroup, band_info2, transition_info2 = pickle.load(f)
+    tr_path = os.path.join(folder_path,"Transitions_"+filename+"_S2.json")
+    f = open(tr_path, "r")
+    #Pointgroup, band_info2, transition_info2 = json.load(f)
+    tr2 = json.load(f)
     f.close()
+
+    Pointgroup = tr1["point_group"]
+    orbital_info1 = tr1["orbitals"]
+    orbital_info2 = tr2["orbitals"]
+    transition_info1 = tr1["transitions"]
+    transition_info2 = tr2["transitions"]
 
     # Get and draw vb and cb
     if vb == None and cb == None:
-        vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), band_info2[0][0], band_info2[-1][0], 2)
+        vb, cb = get_vb_and_cb(os.path.join(folder_path, eig_file), orbital_info2[0]["index"], orbital_info2[-1]["index"], 2)
 
     plt.text(-0.85,-0.35,"VB",fontsize=20)
     plt.text(-0.85,cb-vb+0.15,"CB",fontsize=20)
@@ -401,21 +416,21 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", pos_file="CONTCAR",
     allowed_tr1 = []
     allowed_tr2 = []
     for tr in transition_info1:
-        if tr[-1]:
+        if tr["Transition_allowed"]:
             allowed_tr1.append(tr)
     for tr in transition_info2:
-        if tr[-1]:
+        if tr["Transition_allowed"]:
             allowed_tr2.append(tr)
 
     # Read principal axis from overlap file
-    ov_path = os.path.join(folder_path,"Overlaps_"+filename+"_S2.pickle")
-    f = open(ov_path, "rb")
-    ov = pickle.load(f)
+    ov_path = os.path.join(folder_path,"Overlaps_"+filename+"_S2.json")
+    f = open(ov_path, "r")
+    ov = json.load(f)
     f.close()
-    if len(ov[0][1]) == 1:
+    if len(ov["symmetry_operators"]) == 1:
         principal_axis = np.array([0,0,0])
     else:
-        principal_axis = np.array(ov[0][1][1][2])
+        principal_axis = np.array(ov["symmetry_operators"][1][2])
         T = get_transformation_matrix(pos_file)
         principal_axis = np.linalg.inv(T).dot(principal_axis)
         principal_axis = [round(p / max(principal_axis, key=abs), 3) for p in principal_axis]
@@ -429,8 +444,8 @@ def plot_levels(folder_path, plotname, eig_file= "EIGENVAL", pos_file="CONTCAR",
     labels = plot_transitions(allowed_tr2, 2, labels, vb)
     handles = generate_handles(labels)
 
-    plot_eigen(band_info1, 1, vb)
-    plot_eigen(band_info2, 2, vb)
+    plot_eigen(orbital_info1, 1, vb)
+    plot_eigen(orbital_info2, 2, vb)
 
     plt.xlim([-1, 12])
     plt.ylim([-1, cb-vb+1])
