@@ -148,25 +148,9 @@ def get_symmetry_operators(sym, pos_file, settings):
             int_previous = False
 
     class_symbols, class_perm, mult = sort_into_classes(matrices1, symbols1)
-    perm = []
 
-    for i, symb in enumerate(classes_right_order):
-        symb_2 = "X"
-        if symb == "E":
-            symb = "1"
-        elif symb == "sv" or symb == "sd" or symb == "sh":
-            symb = "S2"
-            symb_2 = "s"
-        elif symb == "S3": # S_n vs S_2n
-            symb = "S6"
-        elif symb == "C2'" or symb == "C2''" or symb == 'C2"':
-            symb = "C2"
-
-        occurance = [j for j, n in enumerate(class_symbols) if n == symb or n == symb_2]
-        for ind in occurance:
-            if mult_right_order[i] == mult[ind] and not ind in perm:
-                perm.append(ind)
-
+    perm = get_class_permutation(classes_right_order, mult_right_order, class_symbols, mult)
+    
     class_perm2 = []
     for p in perm:
         class_perm2.append(class_perm[p])
@@ -186,6 +170,28 @@ def get_symmetry_operators(sym, pos_file, settings):
         axis.append(axis1[i])
 
     return PGname, [symbols, matrices, axis, angle]
+
+def get_class_permutation(classes_right_order, mult_right_order, class_symbols, mult):
+
+
+    perm = []
+
+    for i, symb in enumerate(classes_right_order):
+        symb_2 = "X"
+        if symb == "E":
+            symb = "1"
+        elif symb == "sv" or symb == "sd" or symb == "sh":
+            symb = "S2"
+            symb_2 = "s"
+        elif symb == "S6": # S_n vs S_2n
+            symb = "S3"
+        elif symb == "C2'" or symb == "C2''" or symb == 'C2"':
+            symb = "C2"
+        occurance = [j for j, n in enumerate(class_symbols) if n == symb or n == symb_2]
+        for ind in occurance:
+            if mult_right_order[i] == mult[ind] and not ind in perm:
+                perm.append(ind)
+    return perm
 
 def sort_into_classes(sym_ops, symbols):
     """
